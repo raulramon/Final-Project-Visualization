@@ -1,0 +1,130 @@
+---
+title: "Random Forest"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+```
+
+
+#Random Forest
+
+#Read Data
+```{r}
+CTG <- read.csv("C:/Users/17875/Downloads/CTG.csv", header = TRUE)
+str(CTG)
+CTG$NSP <- as.factor(CTG$NSP)
+table(CTG$NSP)
+```
+
+
+# Data Partition
+```{r}
+set.seed(123)
+ind <- sample(2, nrow(CTG), replace = TRUE, prob = c(0.7, 0.3))
+train <- CTG[ind==1,]
+test <- CTG[ind==2,]
+```
+
+
+#Random Forest
+```{r}
+library(randomForest)
+set.seed(222)
+rf <- randomForest(NSP~., data = train)
+rf
+```
+ Number of trees: 500 #<-- ntree
+No. of variables tried at each split: 4  <--mtry
+```{r}
+attributes(rf)
+```
+
+```{r}
+rf$confusion
+```
+
+#Prediction and Confusion Matrix --- train data
+```{r}
+library(caret)
+p1 <- predict(rf, train)
+head(p1)
+head(train$NSP)
+```
+
+```{r}
+confusionMatrix(p1, train$NSP)
+```
+
+#Prediction with test Data
+```{r}
+p2 <- predict(rf, test)
+confusionMatrix(p2, test$NSP)
+```
+
+#Error Rate of Raondom forest Model
+```{r}
+plot(rf)
+```
+
+#Tune mtry
+```{r}
+t <- tuneRF(train[,-22], train[,22],
+       stepFactor = .5, 
+       plot = TRUE,
+       ntreeTry = 300,
+       trace = TRUE,
+       improve = 0.05)
+t
+```
+
+#Ramdon Forest Model
+```{r}
+set.seed(222)
+rf <- randomForest(NSP~., data = train,
+                   ntree =300,
+                   mtry = 8,
+                   importance = TRUE,
+                   proximity = TRUE)
+rf
+```
+
+#No. Nodes for the Trees
+```{r}
+hist(treesize(rf),
+     main = "No. Nodes for the Trees",
+     col = "green")
+```
+
+#Variable  Importance
+```{r}
+varImpPlot(rf,
+           sort = T,
+           n.var = 10,
+           main = "Top 10 Variable  Importance")
+importance(rf)
+varUsed(rf)
+```
+
+#Partial Defendence Plot
+```{r}
+partialPlot(rf, train, ASTV, "2")
+```
+
+#Extract single tree
+```{r}
+
+getTree(rf, 1, labelVar = TRUE)
+```
+
+#Multi-dimensional Scaling Plot of Proximity Matrix
+```{r}
+MDSplot(rf, train$NSP)
+```
+
+Neural Network
+Deep Learning Neural Network
+Random Forest
+SVM
+AutoML model

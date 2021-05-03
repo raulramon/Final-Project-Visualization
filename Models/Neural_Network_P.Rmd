@@ -1,0 +1,316 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+CTG <- read.csv("C:/Users/17875/Downloads/CTG.csv", header = TRUE)
+str(CTG)
+
+
+#Install Packages
+```{r}
+library(keras)
+#install_keras()
+library(tidyverse)
+```
+#CTG <- read.csv("C:/Users/17875/Downloads/CTG.csv", header = TRUE)
+#Read the data
+```{r}
+data <- read.csv(file.choose(), header = T) #CTG <- read.csv("C:/Users/17875/Downloads/CTG.csv", header = TRUE)
+str(data)
+```
+
+```{r}
+normalizer <- function(df, columnName){
+  mt_colum <- colnames(df[,columnName])
+  
+ 
+  for (x in mt_colum) {
+    tem <- c()
+    
+    i <- 1
+    
+    for(y in df[,x]){
+    
+    tem[i] <- (y - min(df[,x])) / (max(df[,x]) - min(df[,x]))
+     i <- i + 1
+    
+    }
+    df[,x] <- tem
+  }
+  
+  df <- as.data.frame(df)
+  
+  return(df)
+}
+data2 <- normalizer(data, c(1:21))
+```
+
+```{r}
+data
+```
+
+```{r}
+data$NSP <- as.factor(data$NSP)
+data$Tendency <- as.factor(data$Tendency)
+```
+
+
+```{r}
+dataP1 <- ggplot(data = data, mapping = aes(x = ASTV, y = ALTV, color = NSP)) + 
+  geom_point() + theme(legend.position = "top")
+dataP1
+```
+
+```{r}
+dataP2 <- ggplot(data = data, mapping = aes(x = Nmax, y = Nzeros, color = Tendency)) + 
+  geom_point()
+dataP2
+```
+
+
+```{r}
+dataP3 <- ggplot(data = data, mapping = aes(x = Min, y = Max, color = NSP)) + 
+  geom_point()
+dataP3
+```
+
+```{r}
+dataP4 <- ggplot(data = data, mapping = aes(x = LB, y = FM, color = NSP)) + 
+  geom_point()
+dataP4
+```
+
+
+```{r}
+data2$class <- data$NSP
+```
+
+```{r}
+colnames(data2) <- colnames(data)
+```
+
+```{r}
+data2
+```
+
+
+#Change to Matrix
+```{r}
+# data <- as.matrix(data)
+# dimnames(data) <- NULL
+# ```
+# 
+# #Normalize
+# ```{r}
+# data[,1:21] <- normalize(data[,1:21])
+# data[,22] <- as.factor(data[,22])-1
+# summary(data)
+
+
+```
+
+
+#Data Partition
+```{r}
+set.seed(222)
+indctg <- sample(2, nrow(data2), replace = TRUE, prob = c(0.7, 0.3))
+training <- data2[indctg==1,]
+testing <- data2[indctg==2,]
+```
+
+```{r}
+data2
+```
+
+#Neural Network Model
+```{r}
+library(neuralnet)
+set.seed(333)
+n <- neuralnet(NSP ~LB+AC+FM+UC +DL+DS+DP+ASTV+MSTV+ALTV+MLTV+Width+
+                 Min+Max+Nmax+Nzeros+Mode+Mean+Median+Variance+Tendency,
+               data = training,
+               hidden = 1, #fist I do with hidden = 1 and was simple now with 5
+               err.fct = "sse",
+               linear.output = FALSE)
+plot(n)
+```
+
+#Prediction
+```{r}
+output <- compute(n, training[,-22])
+head(output$net.result)
+head(training[1,])
+```
+
+#Node Output Calculation with sigmoid Activation Function
+```{r}
+# in4 <-  0.0455+(0.82344*0.7586207)+(1.35186*0.8103448)+(-0.87435*0.6666667)
+# in4
+# out4 <- 1/(1+exp(-in4))
+# out4
+# in5 <- -7.06125+(8.5741*out4)
+# in5
+# out5 <- 1/(1+exp(-in5))
+# out5
+```
+
+Confusion MAtrix and Misclassification Error - trainig data
+```{r}
+output <- compute(n, training[,-22])
+p1 <- output$net.result
+pred1 <- ifelse(p1>0.5, 1, 0)
+tab1 <- table(pred1, training$NSP)
+tab1
+1-sum(diag(tab1))/sum(tab1) #accuracy -1 is MIsclassification that is 0.2237999
+sum(diag(tab1))/sum(tab1)
+```
+
+Confusion MAtrix and Misclassification Error - testing data
+```{r}
+output <- compute(n, testing[,-22])
+p2 <- output$net.result
+pred2 <- ifelse(p2>0.5, 1, 0)
+tab2 <- table(pred2, testing$NSP)
+tab2
+1-sum(diag(tab2))/sum(tab2) #accuracy -1 is MIsclassification that is 0.2163833
+sum(diag(tab2))/sum(tab2)
+```
+
+
+
+#More Neurons in Hidden Layer
+```{r}
+library(neuralnet)
+set.seed(333)
+n5 <- neuralnet(NSP ~LB+AC+FM+UC +DL+DS+DP+ASTV+MSTV+ALTV+MLTV+Width+
+                 Min+Max+Nmax+Nzeros+Mode+Mean+Median+Variance+Tendency,
+               data = training,
+               hidden = 5, #fist I do with hidden = 1 and was simple now with 5
+               err.fct = "sse",
+               linear.output = FALSE)
+plot(n5)
+```
+
+#Prediction
+```{r}
+output5 <- compute(n5, training[,-22])
+head(output5$net.result)
+head(training[1,])
+```
+
+
+
+Confusion MAtrix and Misclassification Error - trainig data
+```{r}
+output5 <- compute(n5, training[,-22])
+p1_5 <- output5$net.result
+pred1_5 <- ifelse(p1_5>0.5, 1, 0)
+tab1_5 <- table(pred1_5, training$NSP)
+tab1_5
+1-sum(diag(tab1_5))/sum(tab1_5) #accuracy -1 is MIsclassification that is 0.2237999
+sum(diag(tab1_5))/sum(tab1_5)
+```
+
+Confusion MAtrix and Misclassification Error - testing data
+```{r}
+output5 <- compute(n5, testing[,-22])
+p2_5 <- output5$net.result
+pred2_5 <- ifelse(p2_5>0.5, 1, 0)
+tab2_5 <- table(pred2_5, testing$NSP)
+tab2_5
+1-sum(diag(tab2_5))/sum(tab2_5) #accuracy -1 is MIsclassification that is 0.2163833
+sum(diag(tab2_5))/sum(tab2_5)
+```
+
+
+#Neural Network with two Hidden Layers
+```{r}
+library(neuralnet)
+set.seed(333)
+nC <- neuralnet(NSP ~LB+AC+FM+UC +DL+DS+DP+ASTV+MSTV+ALTV+MLTV+Width+
+                 Min+Max+Nmax+Nzeros+Mode+Mean+Median+Variance+Tendency,
+               data = training,
+               hidden = c(2,1), #fist I do with hidden = 1 and was simple now with 5
+               err.fct = "sse",
+               linear.output = FALSE)
+plot(nC)
+```
+
+#Prediction
+```{r}
+outputC <- compute(nC, training[,-22])
+head(outputC$net.result)
+head(training[1,])
+```
+
+
+
+Confusion MAtrix and Misclassification Error - trainig data
+```{r}
+outputC <- compute(nC, training[,-22])
+p1C <- outputC$net.result
+pred1C <- ifelse(p1>0.5, 1, 0)
+tab1C <- table(pred1C, training$NSP)
+tab1C
+1-sum(diag(tab1C))/sum(tab1C) #accuracy -1 is MIsclassification that is 0.2237999
+sum(diag(tab1C))/sum(tab1C)
+```
+
+Confusion MAtrix and Misclassification Error - testing data
+```{r}
+outputC <- compute(nC, testing[,-22])
+p2C <- outputC$net.result
+pred2C <- ifelse(p2>0.5, 1, 0)
+tab2C <- table(pred2C, testing$NSP)
+tab2C
+1-sum(diag(tab2C))/sum(tab2C) #accuracy -1 is MIsclassification that is 0.2163833
+sum(diag(tab2C))/sum(tab2C)
+```
+
+#Neural Network Repeat Calculations
+```{r}
+library(neuralnet)
+set.seed(333)
+n5R <- neuralnet(NSP ~LB+AC+FM+UC +DL+DS+DP+ASTV+MSTV+ALTV+MLTV+Width+
+                 Min+Max+Nmax+Nzeros+Mode+Mean+Median+Variance+Tendency,
+               data = training,
+               hidden = 5, #fist I do with hidden = 1 and was simple now with 5
+               err.fct = "sse",
+               linear.output = FALSE,
+               lifesign = "full",
+               rep = 5,
+               algorithm = "rprop+", #default Algorithm RPROP+: Resilient Backpropagation with Weight Backtacking
+               stepmax = 100000)
+plot(n5R, rep=1)
+```
+
+#Prediction
+```{r}
+output5R <- compute(n5R, training[,-22])
+head(output5R$net.result)
+head(training[1,])
+```
+
+
+
+Confusion MAtrix and Misclassification Error - trainig data
+```{r}
+output5R <- compute(n5R, training[,-22])
+p15R <- output5R$net.result
+pred15R <- ifelse(p1>0.5, 1, 0)
+tab15R <- table(pred15R, training$NSP)
+tab15R
+1-sum(diag(tab15R))/sum(tab15R) #accuracy -1 is MIsclassification that is 0.2237999
+sum(diag(tab15R))/sum(tab15R)
+```
+
+Confusion MAtrix and Misclassification Error - testing data
+```{r}
+output5R <- compute(n5R, testing[,-22])
+p25R <- output5R$net.result
+pred25R <- ifelse(p2>0.5, 1, 0)
+tab25R <- table(pred25R, testing$NSP)
+tab25R
+1-sum(diag(tab25R))/sum(tab25R) #accuracy -1 is MIsclassification that is 0.2163833
+sum(diag(tab25R))/sum(tab25R)
+```
