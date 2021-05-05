@@ -1,0 +1,274 @@
+---
+title: "R Support Vector Machine"
+output: html_notebook
+---
+
+#Classification using Support Vector MAchine
+```{r}
+CTG <- read.csv("C:/Users/17875/Downloads/CTG.csv", header = TRUE)
+str(CTG)
+```
+
+```{r}
+CTG$NSP <- as.factor(CTG$NSP)
+str(CTG)
+```
+
+
+```{r}
+library(ggplot2)
+```
+
+
+```{r}
+qplot(Max, Min , data = CTG,
+      color = NSP )
+```
+
+```{r}
+qplot(ASTV , ALTV , data = CTG,
+      color = NSP)
+```
+
+
+#Support Vector Machine
+
+```{r}
+library(e1071)
+```
+
+```{r}
+mymodel <- svm(NSP~ Max + Min + ASTV + ALTV, data = CTG)
+summary(mymodel)
+```
+
+```{r}
+plot(mymodel, data = CTG,
+     ALTV ~ ASTV,
+     slice = list(Min = 3, Max = 4))
+
+```
+
+#Confusion Matrix & Misclassification Error
+```{r}
+predicR <- predict(mymodel, CTG)
+tabR <- table(Predicted= predicR,Actual = CTG$NSP)
+tabR
+```
+
+```{r}
+svmp1_df <- tabR
+svmp1_df <- as.data.frame(svmp1_df)
+svmp1_df <- mutate(svmp1_df, tab = "svmp1_df")
+svmp1_df
+write.csv(svmp1_df, "svmp1_Radial_df.csv")
+```
+
+
+Misclassification =  0.121825 / Acuracy= 0.878175 
+```{r}
+sum(diag(tabR))/sum(tabR) 
+```
+#Linear Classification
+```{r}
+mymodelL <- svm(NSP ~ Max + Min + ASTV + ALTV, data = CTG,
+               kernel = "linear")
+summary(mymodelL)
+```
+```{r}
+plot(mymodelL, data = CTG,
+     ASTV ~ ALTV,
+    slice = list(Min = 3, Max = 4))
+
+```
+#Confusion Matrix & Misclassification Error
+```{r}
+predicL <- predict(mymodelL, CTG)
+tabL <- table(Predicted= predicL,Actual = CTG$NSP)
+tabL
+```
+
+
+Misclassification = 0.187206 / Acuracy = 0.812794
+```{r}
+sum(diag(tabL))/sum(tabL)
+```
+
+
+```{r}
+svmpL_df <- tabL
+svmpL_df <- as.data.frame(svmpL_df)
+svmpL_df <- mutate(svmpL_df, tab = "svmpL_df")
+svmpL_df
+write.csv(svmpL_df, "svmp_Lineal_df.csv")
+```
+
+
+
+
+#Linear Polinomial
+```{r}
+mymodelP <- svm(NSP ~ Max + Min + ASTV + ALTV, data = CTG, 
+               kernel = "polynomial")
+summary(mymodelP)
+```
+
+```{r}
+plot(mymodelP, data = CTG,
+      ASTV ~ ALTV,
+     slice = list(Min = 3, Max = 4)
+     )
+```
+#Confusion Matrix & Misclassification Error
+```{r}
+predicP <- predict(mymodelP, CTG)
+tabP <- table(Predicted= predicP,Actual = CTG$NSP)
+tabP
+```
+
+
+Misclassification =0.1321731 / Acuracy = 0.8678269
+```{r}
+1-sum(diag(tabP))/sum(tabP)
+```
+
+```{r}
+svmpP_df <- tabP
+svmpP_df <- as.data.frame(svmpP_df)
+svmpP_df <- mutate(svmpP_df, tab = "svmP_df")
+svmpP_df
+write.csv(svmpP_df, "svmp_Polinomial_df.csv")
+```
+
+
+
+#Linear Sigmoid
+```{r}
+mymodel_S <- svm(NSP~Max + Min + ASTV + ALTV, data = CTG,
+               kernel = "sigmoid")
+summary(mymodel_S)
+```
+
+```{r}
+plot(mymodel_S, data = CTG,
+     ASTV~ALTV,
+     slice = list(Min = 3, Max = 4))
+```
+#Confusion Matrix & Misclassification Error
+```{r}
+predicS <- predict(mymodel_S, CTG)
+tabS <- table(Predicted= predicS,Actual = CTG$NSP)
+tabS
+```
+
+```{r}
+svmpSigm_df <- tabS
+svmpSigm_df <- as.data.frame(svmpSigm_df)
+svmpSigm_df <- mutate(svmpSigm_df, tab = "svmpSigm_df")
+svmpSigm_df
+write.csv(svmpSigm_df, "svmp_Sigmod_df.csv")
+```
+
+
+Misclassification = 0.2685795 / Acuracy = 0.7314205
+```{r}
+sum(diag(tabS))/sum(tabS)
+```
+
+#Tuning Hipper parameter optimal classification
+```{r}
+set.seed(123)
+tmodel <- tune(svm, NSP~ Max + Min + ASTV + ALTV, data = CTG,
+     ranges = list(epsilon = seq(0,1,0.1), cost = 2^(2:7)))
+plot(tmodel)
+```
+```{r}
+performance_df <- tmodel$performances
+performance_df
+```
+
+
+```{r}
+svmpPerfomance_df <- performance_df
+svmpPerfomance_df <- as.data.frame(svmpPerfomance_df)
+
+svmpPerfomance_df
+write.csv(svmpPerfomance_df, "svmpPerfomance_df.csv")
+```
+
+
+
+#Best Model
+```{r}
+mymodel <- tmodel$best.model
+summary(mymodel)
+```
+#Plot
+```{r}
+plot(mymodel, data = CTG,
+     ALTV ~ ASTV,
+     slice = list(Max = 3, Min = 4)
+     )
+```
+
+#Confusion Matrix & Misclassification Error
+```{r}
+predic <- predict(mymodel, CTG)
+tab <- table(Predicted= predic,Actual = CTG$NSP)
+tab
+```
+
+
+```{r}
+dfmymodelsv <- as.data.frame(mymodel$sv)
+dfmymodelsv
+```
+
+
+
+
+
+
+```{r}
+
+toSVMResulModel <- cbind(mymodel$SV) mymodel$coefs
+```
+
+
+
+```{r}
+svmpBest_df <- tab
+svmpBest_df <- as.data.frame(svmpBest_df)
+svmpBest_df <- mutate(svmpBest_df, tab = "svmpBest_df")
+svmpBest_df
+write.csv(svmpBest_df, "svmpBest_df.csv")
+```
+
+
+Misclassification = 0.09548448 / Acuracy = 0.9045155
+```{r}
+sum(diag(tab))/sum(tab)
+```
+
+
+
+```{r}
+totalSVM <- rbind(svmp1_df,svmpL_df,svmpP_df,svmpSigm_df,svmpBest_df)
+totalSVM
+write.csv(totalSVM, "svmTotal_df.csv")
+```
+
+```{r}
+totalSVM$tab <- as.factor(totalSVM$tab)
+totalSVM
+```
+
+```{r}
+ggplot(totalSVM, mapping = aes(Freq, , fill = Predicted)) + geom_histogram()
+```
+svmpPerfomance_df
+
+```{r}
+ggplot(svmpPerfomance_df, aes())
+```
+

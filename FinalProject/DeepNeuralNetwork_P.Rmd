@@ -1,0 +1,296 @@
+---
+title: "R Deep Neural Net Work"
+output: html_notebook
+---
+##Deep Learning with Keras & TensorFlow 
+#Install Packages
+```{r}
+library(keras)
+#install_keras()
+```
+#CTG <- read.csv("C:/Users/17875/Downloads/CTG.csv", header = TRUE)
+#Read the data
+```{r}
+data <- read.csv(file.choose(), header = T) #CTG <- read.csv("C:/Users/17875/Downloads/CTG.csv", header = TRUE)
+str(data)
+```
+
+#Change to Matrix
+```{r}
+data <- as.matrix(data)
+dimnames(data) <- NULL
+```
+
+#Normalize
+```{r}
+data[,1:21] <- normalize(data[,1:21])
+data[,22] <- as.numeric(data[,22])-1
+summary(data)
+```
+
+
+#Data Partition
+```{r}
+set.seed(123)
+ind <- sample(2, nrow(data), replace = T, prob = c(0.7, 0.3))
+training <- data[ind==1, 1:21]
+test <- data[ind==2, 1:21]
+trainingtarget <- data[ind==1,22]
+testtarget <- data[ind==2,22]
+```
+
+#One Hot Encoding  #Creating this dummy variables for categories
+```{r}
+trainLabels <- to_categorical(trainingtarget)
+testLabels <- to_categorical(testtarget)
+print(testLabels)
+```
+#Create Sequential model
+```{r}
+model <- keras_model_sequential()
+model %>% 
+  layer_dense(units = 8, activation = 'relu', input_shape = c(21)) %>% #relu = Rectified                                                                            Linear Units
+  layer_dense(units = 3, activation = 'softmax') #softmax activation function in the output
+summary(model)                                    #layer help to keep range between o, & 1                                                      which can be used as probabilities
+```
+#21independent variables 21 *8 = 168 + 8 constant values = 176
+#3 nodes  8 * 3 = 24 + 3 = 27
+
+#Compile the model
+```{r}                        
+model %>%                   #this is because we have three categories
+  compile(loss = 'categorical_crossentropy',  #For two categories we can use 'binary_crossentropy loss function used for two category situations
+          optimizer = 'adam',           #Adam optimization algorithm is a popular algorithm in deep learning field     
+          metrics = 'accuracy')
+```
+
+
+#Fit Model (Multilayer Perceptron 
+Neural Network for
+Multi-class Softmax classification)
+```{r}
+history <- model %>% 
+  fit(training, trainLabels,
+      epoch = 200,     #how many times we run this model
+      batch_size = 32,   # number of samples thata we used for gradients
+      validation_split = 0.2)   
+```
+
+
+```{r}
+plot(history)
+```
+
+
+```{r}
+head(history)
+```
+
+
+#Evaluate Model - Test Data
+```{r}
+model1 <- model %>% 
+  evaluate(test, testLabels)
+```
+
+#Prediction & confusion Matrix - test data
+```{r}
+prob <- model %>% 
+  predict_proba(test)
+```
+
+Predict
+```{r}
+pred <- model %>% 
+  predict_classes(test)
+
+table1 <- table(Predicted = pred, Actual = testtarget)
+table1
+```
+```{r}
+DNnCatcr_200R <- table1
+DNnCatcr_200R <- as.data.frame(DNnCatcr_200R)
+DNnCatcr_200R <- mutate(DNnCatcr_200R, tab = "DNnCC")
+DNnCatcr_200R 
+write.csv(DNnCatcr_200R, "DNnCatcr_200R.csv")
+```
+
+```{r}
+cbind(prob, pred, testtarget)
+```
+
+#Fine Tune Model
+```{r}
+table1
+model1
+```
+
+#Create Sequential model2
+```{r}
+model <- keras_model_sequential()
+model %>% 
+  layer_dense(units = 50, activation = 'relu', input_shape = c(21)) %>% #relu = Rectified                                                                            Linear Units
+  layer_dense(units = 3, activation = 'softmax') #softmax activation function in the output
+summary(model)                                    #layer help to keep range between o, & 1                                                      which can be used as probabilities
+```
+#21independent variables 21 *8 = 168 + 8 constant values = 176
+#3 nodes  8 * 3 = 24 + 3 = 27
+
+#Compile the model
+```{r}                        
+model %>%                   #this is because we have three categories
+  compile(loss = 'categorical_crossentropy',  #For two categories we can use 'binary_crossentropy loss function used for two category situations
+          optimizer = 'adam',           #Adam optimization algorithm is a popular algorithm in deep learning field     
+          metrics = 'accuracy')
+```
+
+
+#Fit Model (Multilayer Perceptron 
+Neural Network for
+Multi-class Softmax classification)
+```{r}
+history2 <- model %>% 
+  fit(training, trainLabels,
+      epoch = 200,     #how many times we run this model
+      batch_size = 32,   # number of samples thata we used for gradients
+      validation_split = 0.2)   
+```
+
+
+```{r}
+plot(history2)
+```
+
+#Evaluate Model - Test Data
+```{r}
+model2 <- model %>% 
+  evaluate(test, testLabels)
+```
+
+#Prediction & confusion Matrix - test data
+```{r}
+prob2 <- model %>% 
+  predict_proba(test)
+```
+
+Predict
+```{r}
+pred2 <- model %>% 
+  predict_classes(test)
+
+table2 <- table(Predicted = pred2, Actual = testtarget)
+```
+#Fine-tune model
+```{r}
+table1
+model1
+table2
+model2
+```
+
+#Create Sequential model3
+```{r}
+model3 <- keras_model_sequential()
+model3 %>% 
+  layer_dense(units = 50, activation = 'relu', input_shape = c(21)) %>% #relu = Rectified                                                                            Linear Units
+  layer_dense(units = 8, activation = 'relu') %>% 
+  layer_dense(units = 3, activation = 'softmax') #softmax activation function in the output
+summary(model3)                                    #layer help to keep range between o, & 1                                                      which can be used as probabilities
+```
+#21independent variables 21 *8 = 168 + 8 constant values = 176
+#3 nodes  8 * 3 = 24 + 3 = 27
+
+#Compile the model
+```{r}                        
+model3 %>%                   #this is because we have three categories
+  compile(loss = 'categorical_crossentropy',  #For two categories we can use 'binary_crossentropy loss function used for two category situations
+          optimizer = 'adam',           #Adam optimization algorithm is a popular algorithm in deep learning field     
+          metrics = 'accuracy')
+```
+
+
+#Fit Model (Multilayer Perceptron 
+Neural Network for
+Multi-class Softmax classification)
+```{r}
+history <- model3 %>% 
+  fit(training, trainLabels,
+      epoch = 200,     #how many times we run this model
+      batch_size = 32,   # number of samples thata we used for gradients
+      validation_split = 0.2)   
+```
+
+
+```{r}
+plot(history)
+```
+
+#Evaluate Model - Test Data
+```{r}
+model3 <- model3 %>% 
+  evaluate(test, testLabels)
+```
+
+#Prediction & confusion Matrix - test data
+```{r}
+prob3 <- model %>% 
+  predict_proba(test)
+```
+
+Predict
+```{r}
+pred <- model %>% 
+  predict_classes(test)
+
+table3 <- table(Predicted = pred, Actual = testtarget)
+```
+
+```{r}
+table1    #one hidden layer, units = 8
+model1
+table2    #One hidden layer, units = 50
+model2
+table3     #Two hidden layers, units = 50 & 8
+model3
+```
+
+
+
+```{r}
+table1
+```
+
+
+```{r}
+data_frame_1 <- as.data.frame(table1)
+```
+
+
+
+```{r}
+data_frame_1 <- mutate(data_frame_1, tab = "table1")
+data_frame_1
+```
+
+```{r}
+data_frame_2 <- mutate(data_frame_2, tab = "table2")
+data_frame_3 <- mutate(data_frame_3, tab = "table3")
+```
+
+
+```{r}
+data_frame_2 <- as.data.frame(table2)
+data_frame_3 <- as.data.frame(table3)
+```
+
+```{r}
+write.csv(data_frame_1, "table1_DNNW.csv")
+write.csv(data_frame_2, "table2_DNNW.CSV")
+write.csv(data_frame_3, "table3_DNNW.CSV")
+```
+
+```{r}
+DNnTotal_df <- rbind(data_frame_1,data_frame_2,data_frame_3)
+DNnTotal_df
+```
+

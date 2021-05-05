@@ -1,0 +1,13 @@
+name: FinalProject
+title: FinalProject
+username:
+account: raulramon
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4076768
+bundleId: 4555688
+url: https://raulramon.shinyapps.io/FinalProject/
+when: 1620136709.18606
+lastSyncTime: 1620136709.18606
+asMultiple: FALSE
+asStatic: FALSE

@@ -1,0 +1,13 @@
+name: cardiotogramFP
+title: cardiotogramFP
+username:
+account: raulramon
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4080773
+bundleId: 4558294
+url: https://raulramon.shinyapps.io/cardiotogramFP/
+when: 1620181178.17249
+lastSyncTime: 1620181178.17249
+asMultiple: FALSE
+asStatic: FALSE
